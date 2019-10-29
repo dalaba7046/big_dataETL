@@ -86,7 +86,7 @@ try:
             gender = task2.find('性別要求')
             try:
                 if gender != -1:
-                    house_gender.append(task2[gender:gender+10].replace("性別要求：","").replace('朝向：','').replace('隔間材'))
+                    house_gender.append(task2[gender:gender+10].replace("性別要求：","").replace('朝向：','').replace('隔間材',''))
                 else:
                     house_gender.append("None")
             except:
