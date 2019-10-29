@@ -70,8 +70,8 @@ try:
         #爬取物件中的型態+性別要求
         
         for url in urls:
-            under_req = requests.get(url, headers=headers)
-            soup = bs(under_req.text,'html.parser')
+            res = requests.get(url, headers=headers)
+            soup = bs(res.text,'html.parser')
             task=soup.select('ul[class="attr"]')[0].find_all('li')
             task_len=len(task)
             for l in range(task_len):
@@ -83,10 +83,10 @@ try:
                     pass 
             #性別要求取出
             task2=soup.select('ul[class="clearfix labelList labelList-1"]')[0].find_all('li')[1].get_text()
-            nus_h = task2.find('性別要求')
+            gender = task2.find('性別要求')
             try:
-                if nus_h != -1:
-                    house_gender.append(task2[nus_h:nus_h+10].replace("性別要求：","").replace('朝向：',''))
+                if gender != -1:
+                    house_gender.append(task2[gender:gender+10].replace("性別要求：","").replace('朝向：','').replace('隔間材'))
                 else:
                     house_gender.append("None")
             except:
