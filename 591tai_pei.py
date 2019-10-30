@@ -2,7 +2,6 @@ import json
 from bs4 import BeautifulSoup as bs
 import requests
 import pandas as pd
-import pymongo
 from pymongo import MongoClient
 
 '''
@@ -18,20 +17,7 @@ EX:
 台北市是1
 新北市是3
 '''
-#建立所需資料集合
-linkman =[]#出租者
-nick_name = []#身分
-house_attr =[]#型態
-house_phone = []#電話
-kind_name = []#現況
-house_gender =[]#性別要求
-
-#mongoDB設定
-host='localhost'
-port=27017
-database='591spider'
-table='spider'
-data=df
+#建立mongoDB需要設定
 def  MongoBase(host,port,database,table,data):
     #設定mongoDB連線
     client = MongoClient(host, port)
@@ -41,15 +27,24 @@ def  MongoBase(host,port,database,table,data):
     spider = db[table]#資料表名稱為spider
     #操作mongoDB放入資料
     spider.insert(json.loads(data.T.to_json()).values())
+#建立所需資料集合
+linkman =[]#出租者
+nick_name = []#身分
+house_attr =[]#型態
+house_phone = []#電話
+kind_name = []#現況
+house_gender =[]#性別要求
+
+
 #以下針對台北市的物件做爬蟲
 
 #目標網址
-api_one='https://rent.591.com.tw/home/search/rsList?is_new_list=1&type=1&kind=0&searchtype=1&region=1&firstRow=0'
-#for m in range(365):
-#    print("第{}筆".format(m))
-#    m=m*30
-#    apiurl=api_one+str(m)
-headers = {'Accept': 'application/json, text/javascript, */*; q=0.01',
+api_one='https://rent.591.com.tw/home/search/rsList?is_new_list=1&type=1&kind=0&searchtype=1&region=1&firstRow='
+for m in range(365):
+    print("第{}筆".format(m))
+    m=m*30
+    apiurl=api_one+str(m)
+    headers = {'Accept': 'application/json, text/javascript, */*; q=0.01',
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
         'Connection': 'keep-alive',
@@ -60,25 +55,25 @@ headers = {'Accept': 'application/json, text/javascript, */*; q=0.01',
         'X-CSRF-TOKEN': 'RNGEni8wMneYEXj7JeaB3GNnN8N8B8ufCaz9jiJ0',
         'X-Requested-With':'XMLHttpRequest'
         }
-req = requests.get(api_one, headers=headers)
-html = bs(req.text,'html.parser')
-goods_url = json.loads(html.text)
+    req = requests.get(api_one, headers=headers)
+    html = bs(req.text,'html.parser')
+    goods_url = json.loads(html.text)
     #根據API爬取出租者,身分,現況
-for i in range(30):
+    for i in range(30):
         linkman.append(goods_url['data']['data'][i]['linkman'])
         nick_name.append(goods_url['data']['data'][i]['nick_name'][0:2])
         kind_name.append(goods_url['data']['data'][i]['kind_name'])
         
     #建立物件url,方便等等爬取電話,型態,性別要求
-urls_id=[]
-for j in range(30):
+    urls_id=[]
+    for j in range(30):
         try:
             good_url = goods_url['data']['data'][j]['id']
             urls_id.append(good_url)   
         except:
             pass
-urls=[]
-for k in range(len(urls_id)):
+    urls=[]
+    for k in range(len(urls_id)):
         under_url = 'https://rent.591.com.tw/rent-detail-'+ str(urls_id[k]) +'.html'
         urls.append(under_url)
         under_req = requests.get(under_url, headers=headers)
@@ -87,12 +82,12 @@ for k in range(len(urls_id)):
     
     #爬取物件中的型態+性別要求
     
-for url in urls:
-    under_req = requests.get(url, headers=headers)
-    soup = bs(under_req.text,'html.parser')
-    task=soup.select('ul[class="attr"]')[0].find_all('li')
-    task_len=len(task)
-    for l in range(task_len):
+    for url in urls:
+        under_req = requests.get(url, headers=headers)
+        soup = bs(under_req.text,'html.parser')
+        task=soup.select('ul[class="attr"]')[0].find_all('li')
+        task_len=len(task)
+        for l in range(task_len):
             task[l]=task[l].get_text()
             if  "型態" in task[l]:
         #型態取出
@@ -100,40 +95,26 @@ for url in urls:
             else:
                 pass 
         #性別要求取出
-    task2=soup.select('ul[class="clearfix labelList labelList-1"]')[0].find_all('li')[1].get_text()
-    gender = task2.find('性別要求')
-    try:
-            if gender != -1:
-                house_gender.append(task2[gender:gender+10].replace("性別要求：","").replace('朝向：','').replace('隔間材',''))
+        task2=soup.select('ul[class="clearfix labelList labelList-1"]')[0].find_all('li')[1].get_text()
+        nus_h = task2.find('性別要求')
+        try:
+            if nus_h != -1:
+                house_gender.append(task2[nus_h:nus_h+10].replace("性別要求：","").replace('朝向：','').replace('隔間材',''))
             else:
                 house_gender.append("None")
-    except:
+        except:
                 pass
         #電話取出
-    try:
+        try:
             phone=soup.select('span[class="dialPhoneNum"]')[0].get('data-value')
             house_phone.append(phone)
-    except:
+        except:
             pass
         
 
 #將先將台北市資料彙整為一個dataframe
-#data = pd.concat([pd.DataFrame({'linkman': linkman}), pd.DataFrame({'nick_name':nick_name}), pd.DataFrame({'house_attr':house_attr}), 
-#         pd.DataFrame({'kind_name':kind_name}), pd.DataFrame({'house_phone':house_phone}), pd.DataFrame({'house_gender':house_gender})], axis=1)
-data={
-      'linkman': linkman,
-      'nick_name':nick_name,
-      'house_attr':house_attr,
-      'house_phone':house_phone,
-      'kind_name':kind_name,
-      'house_gender':house_gender
-      }
-df=pd.DataFrame(data)
+data = pd.concat([pd.DataFrame({'linkman': linkman}), pd.DataFrame({'nick_name':nick_name}), pd.DataFrame({'house_attr':house_attr}), 
+         pd.DataFrame({'kind_name':kind_name}), pd.DataFrame({'house_phone':house_phone}), pd.DataFrame({'house_gender':house_gender})], axis=1)
 
 if __name__ =='__main__':
-    host='localhost'
-    port=27017
-    database='591spider'
-    table='tai_pei'
-    data=df
     MongoBase(host,port,database,table,data)
