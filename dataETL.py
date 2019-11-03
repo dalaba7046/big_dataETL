@@ -85,7 +85,7 @@ for k in range(total):
         df_all['建物型態'][k]='住宅大樓'
 #下達篩選條件輸出csv
 filter_a=df_all[(df_all['主要用途']=='住家用')&(df_all['建物型態']=='住宅大樓')&(df_all['總樓層數']>=13)]
-filter_a.to_csv('filter_a.csv')
+filter_a.to_csv('filter_a.csv',encoding='utf_8_sig')
 
 '''
 filter_b.csv資料集建立
@@ -127,4 +127,4 @@ Dict={
       '平均車位總價元':[avg_cartotal]
       }
 filter_b=pd.DataFrame(Dict).round(2)
-filter_b.to_csv('filter_b.csv')
+filter_b.to_csv('filter_b.csv',encoding='utf_8_sig')
