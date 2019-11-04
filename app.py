@@ -32,14 +32,20 @@ def get_all():
     return jsonify({'result' : output})
 
 #設計查詢【男生可承租】且【位於新北】的租屋物件
-@app.route("/api/<house_gender>",methods=['GET'])
-def search(house_gender): 
+@app.route("/api/<area>/<house_gender>",methods=['GET'])
+def search(area,house_gender): 
     xinbei = mongo.db.xin_bei
-    res=xinbei.find({'house_gender': house_gender})
-    output=[]
-    for q in res:
-        output.append({'刊登者' : q['linkman'], '身分' : q['nick_name'],'型態':q['house_attr'],'類別':q['kind_name'],'電話':q['house_phone'],'限定性別':q['house_gender']})
-    return jsonify({'result':output})
+    taipei=mongo.db.tai_bei
+    output = []
+    for s in xinbei.find():
+        output.append({'地區':'新北','刊登者' : s['linkman'], '身分' : s['nick_name'],'型態':s['house_attr'],'類別':s['kind_name'],'電話':s['house_phone'],'限定性別':s['house_gender']})
+    for t in taipei.find():
+        output.append({'地區':'台北','刊登者' : t['linkman'], '身分' : t['nick_name'],'型態':t['house_attr'],'類別':t['kind_name'],'電話':t['house_phone'],'限定性別':t['house_gender']})
+    res=[]
+    for q in output:
+       if q['地區'] == area and q['限定性別'] == house_gender:
+            res.append(q)
+    return jsonify({'result':res})
 #設計所有【非屋主自行刊登】的租屋物件
 @app.route("/api/nick_name",methods=['GET'])
 def nick_name():
@@ -83,5 +89,4 @@ def search_all(area,nick_name,linkman):
         if q['地區'] == area and q['身分'] == nick_name and q['刊登者'] == linkman:
             res.append(q)
     return jsonify({'result':res})
-
 app.run()
