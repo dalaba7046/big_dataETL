@@ -17,8 +17,6 @@ mongo = PyMongo(app)
 #for t in taipei.find():
 #    output2.append({'linkman' : t['linkman'], 'nick_name' : t['nick_name'],'house_attr':t['house_attr'],'kind_name':t['kind_name'],'house_phone':t['house_phone'],'house_gender':t['house_gender']})
 
-
-
 #所有資料
 @app.route("/api",methods=['GET'])
 def get_all():
